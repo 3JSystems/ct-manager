@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CT Manager" />
+  <meta name="description" content="CT Test & Certificate Management for HV Engineers" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <title>CT Manager</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #1a2035;
+      --card2: #1f2844;
+      --border: #2a3555;
+      --border2: #3a4a6a;
+      --accent: #00d4ff;
+      --accent2: #0099cc;
+      --accent-dim: rgba(0,212,255,0.12);
+      --green: #00e676;
+      --green-dim: rgba(0,230,118,0.12);
+      --red: #ff4444;
+      --red-dim: rgba(255,68,68,0.12);
+      --amber: #ffb300;
+      --amber-dim: rgba(255,179,0,0.12);
+      --text: #e2eeff;
+      --text2: #8899bb;
+      --text3: #556080;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --radius: 10px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; }
+    input, select, textarea, button { font-family: var(--sans); }
+    input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    ::placeholder { color: var(--text3); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fade-up { animation: fadeUp 0.25s ease both; }
+
+    /* ── Layout ── */
+    #app { max-width: 680px; margin: 0 auto; padding: 0 16px; padding-top: var(--safe-top); }
+    .sticky-header { position: sticky; top: 0; z-index: 40; background: var(--bg); padding: 12px 0 10px; border-bottom: 1px solid var(--border); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .page-title { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; }
+    .page-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; }
+    .spacer { flex: 1; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: filter 0.15s, transform 0.1s; user-select: none; }
+    .btn:active { transform: scale(0.96); }
+    .btn:hover { filter: brightness(1.1); }
+    .btn-primary { background: var(--accent); color: #0a0e1a; padding: 10px 18px; font-size: 14px; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-ghost { background: var(--card); color: var(--text2); border: 1px solid var(--border); padding: 8px 14px; font-size: 13px; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,68,0.3); padding: 6px 12px; font-size: 12px; }
+    .btn-success { background: var(--green); color: #0a0e1a; padding: 10px 18px; font-size: 14px; }
+    .btn-back { background: none; border: none; color: var(--accent); font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
+    .btn-icon { background: var(--card); border: 1px solid var(--border); color: var(--text2); border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: 16px; }
+
+    /* ── Cards / Sections ── */
+    .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+    .section-header { background: var(--surface); padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .section-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; }
+    .section-body { padding: 16px; }
+    .section-toggle { color: var(--text3); font-size: 12px; }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 13px; }
+    .field label { display: block; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; font-family: var(--mono); }
+    .field input, .field select, .field textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 10px 12px; font-size: 14px; transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.08); }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .field select { appearance: auto; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12px; }
+
+    /* ── Job list cards ── */
+    .job-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    .job-card:hover, .job-card:active { border-color: var(--accent); background: var(--card2); }
+    .job-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .job-num { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+    .job-site { font-size: 13px; color: var(--text2); margin-top: 2px; }
+    .job-meta { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 6px; letter-spacing: 0.03em; }
+    .job-warning { margin-top: 8px; padding: 5px 10px; background: var(--red-dim); border: 1px solid rgba(255,68,68,0.3); border-radius: 6px; font-size: 11px; color: var(--red); }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; border-radius: 20px; padding: 3px 10px; font-size: 10px; font-weight: 700; font-family: var(--mono); letter-spacing: 0.05em; text-transform: uppercase; }
+    .badge-draft { background: rgba(85,96,128,0.2); color: var(--text3); border: 1px solid rgba(85,96,128,0.3); }
+    .badge-progress { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,179,0,0.3); }
+    .badge-complete { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+    .badge-submitted { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+    .badge-pass { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+    .badge-fail { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+    .badge-advisory { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,179,0,0.3); }
+
+    /* ── CT block ── */
+    .ct-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .ct-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .ct-label { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .sub-label { font-family: var(--mono); font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: block; }
+
+    /* ── Photo grid ── */
+    .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .photo-thumb { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--surface); }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-del { position: absolute; top: 4px; right: 4px; background: rgba(10,14,26,0.75); border: none; border-radius: 50%; width: 22px; height: 22px; color: var(--red); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .photo-save { position: absolute; top: 4px; left: 4px; background: rgba(10,14,26,0.75); border: none; border-radius: 6px; color: var(--green); cursor: pointer; font-size: 14px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+    .photo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Tab bar ── */
+    .tab-bar { display: flex; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 16px; gap: 3px; }
+    .tab { flex: 1; text-align: center; padding: 8px 6px; font-size: 12px; font-weight: 600; color: var(--text3); cursor: pointer; border-radius: 7px; transition: all 0.15s; font-family: var(--mono); }
+    .tab.active { background: var(--accent); color: #0a0e1a; }
+
+    /* ── Cert selector ── */
+    .cert-btn { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+    .cert-btn:hover { border-color: var(--accent); }
+    .cert-btn-title { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); }
+    .cert-btn-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+    /* ── Search ── */
+    .search-wrap { position: relative; margin-bottom: 14px; }
+    .search-wrap input { width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 11px 14px 11px 38px; font-size: 14px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+    .empty-icon { font-size: 48px; margin-bottom: 14px; }
+    .empty-text { font-size: 14px; margin-bottom: 20px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: calc(20px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); background: var(--green); color: #0a0e1a; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 13px; font-family: var(--mono); z-index: 200; animation: fadeUp 0.2s ease; white-space: nowrap; }
+
+    /* ── Certificate print styles ── */
+    .cert-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; overflow: auto; padding: 16px; padding-bottom: calc(16px + var(--safe-bottom)); }
+    .cert-actions { display: flex; gap: 8px; margin-bottom: 12px; justify-content: flex-end; flex-wrap: wrap; }
+    #cert-page { background: white; color: #111; max-width: 820px; margin: 0 auto; padding: 28px 32px; border-radius: 4px; font-family: Arial, Helvetica, sans-serif; font-size: 11px; line-height: 1.4; }
+    #cert-page h1 { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 3px; }
+    #cert-page h2 { font-size: 12px; font-weight: bold; background: #1a2035; color: white; padding: 5px 10px; margin: 14px 0 8px; }
+    #cert-page .cert-meta { text-align: center; font-size: 10px; color: #444; border-bottom: 2px solid #1a2035; padding-bottom: 10px; margin-bottom: 4px; }
+    #cert-page .c-row { display: flex; gap: 16px; margin-bottom: 5px; }
+    #cert-page .c-cell { flex: 1; }
+    #cert-page .c-label { font-size: 9px; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+    #cert-page .c-val { font-size: 11px; border-bottom: 1px solid #ccc; min-height: 14px; padding-bottom: 1px; }
+    #cert-page table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 12px; }
+    #cert-page th { background: #1a2035; color: white; padding: 4px 5px; text-align: left; border: 1px solid #aaa; font-size: 9px; }
+    #cert-page td { padding: 3px 5px; border: 1px solid #ccc; vertical-align: middle; }
+    #cert-page tr:nth-child(even) td { background: #f4f7fb; }
+    #cert-page .pass { color: green; font-weight: bold; }
+    #cert-page .fail { color: red; font-weight: bold; }
+    #cert-page .advisory { color: orange; font-weight: bold; }
+    #cert-page .result-box { padding: 8px 14px; border-radius: 4px; text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 12px; border: 2px solid; }
+    #cert-page .result-pass { background: #f0fdf4; color: green; border-color: green; }
+    #cert-page .result-fail { background: #fef2f2; color: red; border-color: red; }
+    #cert-page .sig-row { display: flex; gap: 24px; margin-top: 20px; }
+    #cert-page .sig-box { flex: 1; border-top: 2px solid #333; padding-top: 4px; font-size: 9px; color: #555; }
+    #cert-page .cert-logo-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    #cert-page .cert-logo-placeholder { width: 80px; height: 36px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999; border-radius: 4px; }
+    #cert-page .disclaimer { margin-top: 14px; padding: 8px 10px; border: 1px solid #ddd; font-size: 8.5px; color: #666; }
+    #cert-page .network-header { background: linear-gradient(135deg, #1a2035 60%, #2a4070); color: white; padding: 10px 14px; margin-bottom: 10px; }
+    #cert-page .nged-stripe { border-top: 4px solid #e63329; }
+    #cert-page .spen-stripe { border-top: 4px solid #003087; }
+    #cert-page .npg-stripe { border-top: 4px solid #f5a623; }
+    #cert-page .ukpn-stripe { border-top: 4px solid #00a651; }
+    #cert-page .enw-stripe { border-top: 4px solid #00a0dc; }
+    #cert-page .ssen-stripe { border-top: 4px solid #6ab04c; }
+
+    @media print {
+      body { background: white !important; }
+      .cert-overlay { position: static; background: white; padding: 0; }
+      .cert-actions { display: none !important; }
+      #cert-page { box-shadow: none; }
+    }
+
+    /* ── Settings page ── */
+    .settings-logo { width: 100%; height: 120px; background: var(--surface); border: 2px dashed var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 8px; overflow: hidden; }
+    .settings-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .install-card { background: linear-gradient(135deg, var(--accent-dim), rgba(0,153,204,0.08)); border: 1px solid rgba(0,212,255,0.3); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .install-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+    .install-num { background: var(--accent); color: #0a0e1a; font-family: var(--mono); font-weight: 700; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .install-text { font-size: 13px; color: var(--text2); padding-top: 2px; }
+
+    /* ── OneDrive sync bar ── */
+    .sync-bar { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .sync-status { font-family: var(--mono); font-size: 11px; color: var(--text3); flex: 1; min-width: 0; }
+    .sync-status.synced { color: var(--green); }
+    .sync-status.syncing { color: var(--amber); }
+    .sync-status.error { color: var(--red); }
+    .od-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; overflow: hidden; }
+    .od-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+    .onedrive-card { background: linear-gradient(135deg, rgba(0,120,212,0.15), rgba(0,80,160,0.08)); border: 1px solid rgba(0,120,212,0.35); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .photo-save-btn { position: absolute; bottom: 4px; right: 4px; background: rgba(10,14,26,0.8); border: none; border-radius: 6px; color: var(--accent); cursor: pointer; font-size: 11px; padding: 3px 6px; font-family: var(--mono); font-weight: 600; }
+  </style>
+  <!-- Microsoft Authentication Library -->
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════════════════
+const DB = {
+  get: (k, d=[]) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { console.error(e); } },
+  getJobs: () => DB.get('ctm_jobs', []),
+  saveJobs: (j) => DB.set('ctm_jobs', j),
+  getJob: (id) => DB.getJobs().find(j => j.id === id),
+  upsertJob: (job) => { const jobs = DB.getJobs(); const i = jobs.findIndex(j => j.id === job.id); if (i >= 0) jobs[i] = job; else jobs.unshift(job); DB.saveJobs(jobs); },
+  deleteJob: (id) => DB.saveJobs(DB.getJobs().filter(j => j.id !== id)),
+  getSettings: () => DB.get('ctm_settings', {}),
+  saveSettings: (s) => DB.set('ctm_settings', s),
+};
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = (d) => { if (!d) return ''; try { return new Date(d).toLocaleDateString('en-GB'); } catch { return d; } };
+
+const blankCT = () => ({
+  id: uid(),
+  serialNumber: '', panelSerialNumber: '', manufacturer: '', ratio: '', burden: '',
+  accuracyClass: '', va: '', location: '', phaseLabel: 'L1',
+  primaryCurrentApplied: '', secondaryCurrentMeasured: '', ratioErrorPercent: '',
+  phaseDisplacementMin: '', magnetisingCurrentMa: '', insulationResistanceMohm: '',
+  kneePointVoltage: '', excitationCurrentKnee: '', dcResistanceOhm: '',
+  polarity: 'Correct', testDate: today(), testEngineer: '', testResult: 'Pass', notes: '',
+  photos: [],
+});
+
+const blankJob = () => ({
+  id: uid(), jobNumber: '', siteReference: '', siteName: '', siteAddress: '', sitePostcode: '',
+  clientName: '', clientContact: '', clientAddress: '',
+  contractorName: '', contractorAddress: '', contractorPostcode: '',
+  authorisedEngineer: '', engineerRef: '', certNumber: '', jobDate: today(),
+  voltage: '11kV', panelMake: '', panelModel: '', panelYear: '', panelSerialNumber: '',
+  substationRef: '', mpan: '', meteringPoint: '',
+  networkOperator: 'NGED', networkRef: '',
+  cts: [blankCT()],
+  photos: [], status: 'Draft', createdAt: new Date().toISOString(),
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+const state = {
+  page: 'list',    // list | job | cert | settings
+  jobId: null,
+  certType: null,
+  job: null,
+  toast: null,
+  _listeners: [],
+  set(patch) { Object.assign(this, patch); this._listeners.forEach(fn => fn()); },
+  subscribe(fn) { this._listeners.push(fn); },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+const app = document.getElementById('app');
+let _toastTimer = null;
+
+function showToast(msg) {
+  if (_toastTimer) clearTimeout(_toastTimer);
+  state.toast = msg;
+  render();
+  _toastTimer = setTimeout(() => { state.toast = null; render(); }, 2200);
+}
+
+function render() {
+  if (state.page === 'list') renderList();
+  else if (state.page === 'job') renderJob();
+  else if (state.page === 'cert') renderCert();
+  else if (state.page === 'settings') renderSettings();
+  if (state.toast) {
+    let t = document.getElementById('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+    t.textContent = state.toast;
+  } else {
+    document.getElementById('toast')?.remove();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// JOB LIST PAGE
+// ═══════════════════════════════════════════════════════════════════
+function renderList() {
+  const jobs = DB.getJobs();
+  const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const filtered = q ? jobs.filter(j => [j.jobNumber,j.siteName,j.clientName,j.siteReference].some(f=>(f||'').toLowerCase().includes(q))) : jobs;
+
+  const badgeClass = s => ({'Draft':'badge-draft','In Progress':'badge-progress','Complete':'badge-complete','Submitted':'badge-submitted'}[s]||'badge-draft');
+
+  app.innerHTML = `
+    <div style="padding-bottom:calc(20px + var(--safe-bottom))">
+      <div class="sticky-header">
+        <div>
+          <div class="page-title">⚡ CT Manager</div>
+          <div class="page-sub">HV Current Transformer Database</div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn-icon" onclick="state.set({page:'settings'}); render();" title="Settings">⚙️</button>
+        <button class="btn btn-primary btn-sm" onclick="newJob()">+ New Job</button>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" type="search" placeholder="Search jobs, sites, clients…" value="${q}"
+          oninput="render()" style="padding-left:38px" />
+      </div>
+
+      ${buildSyncBar()}
+
+      <div id="job-list">
+        ${filtered.length === 0 ? `
+          <div class="empty fade-up">
+            <div class="empty-icon">🔌</div>
+            <div class="empty-text">${q ? 'No jobs match your search.' : 'No jobs yet. Tap + New Job to get started.'}</div>
+          </div>
+        ` : filtered.map(j => `
+          <div class="job-card fade-up" onclick="openJob('${j.id}')">
+            <div class="job-card-top">
+              <div style="min-width:0">
+                <div class="job-num">${e(j.jobNumber||'Untitled Job')}</div>
+                <div class="job-site">${e(j.siteName||'No site name')}${j.siteReference?' · <span style="color:var(--text3)">'+e(j.siteReference)+'</span>':''}</div>
+                <div class="job-meta">${e(j.clientName||'—')} &nbsp;·&nbsp; ${j.cts?.length||0} CT${j.cts?.length!==1?'s':''} &nbsp;·&nbsp; ${fmtDate(j.jobDate)} &nbsp;·&nbsp; ${e(j.networkOperator||'—')}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                <span class="badge ${badgeClass(j.status)}">${e(j.status||'Draft')}</span>
+                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteJob('${j.id}')">🗑</button>
+              </div>
+            </div>
+            ${j.cts?.some(c=>c.testResult==='Fail')?`<div class="job-warning">⚠ One or more CTs have FAILED results</div>`:''}
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function newJob() {
+  state.job = blankJob();
+  state.set({ page: 'job', jobId: null });
+  render();
+  window.scrollTo(0,0);
+}
+
+function openJob(id) {
+  state.job = JSON.parse(JSON.stringify(DB.getJob(id)));
+  state.set({ page: 'job', jobId: id });
+  render();
+  window.scrollTo(0,0);
+}
+
+function deleteJob(id) {
+  if (!confirm('Delete this job? This cannot be undone.')) return;
+  DB.deleteJob(id);
+  showToast('Job deleted');
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// JOB EDITOR PAGE
+// ═══════════════════════════════════════════════════════════════════
+function renderJob() {
+  const j = state.job;
+  const badgeClass = s => ({'Draft':'badge-draft','In Progress':'badge-progress','Complete':'badge-complete','Submitted':'badge-submitted'}[s]||'badge-draft');
+  const networks = ['NGED','SPEN','Northern Powergrid','UKPN','ENW','SSEN'];
+  const voltages = ['415V','6.6kV','11kV','22kV','33kV','66kV','132kV'];
+  const phases = ['L1','L2','L3','L1-L2','L2-L3','L1-L3','Neutral','N/A'];
+  const accuracyClasses = ['0.1','0.2','0.2S','0.5','0.5S','1.0','3.0','5P10','5P20','10P10','10P20','PS','X'];
+
+  app.innerHTML = `
+    <div style="padding-bottom:calc(80px + var(--safe-bottom))">
+      <div class="sticky-header">
+        <button class="btn-back" onclick="backToList()">←</button>
+        <div style="min-width:0">
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e(j.jobNumber||'New Job')}</div>
+          <div style="font-size:11px;color:var(--text3)">${e(j.siteName||'No site')}</div>
+        </div>
+        <div class="spacer"></div>
+        <span class="badge ${badgeClass(j.status)}">${e(j.status)}</span>
+        <button class="btn btn-primary btn-sm" id="save-btn" onclick="saveJob()">Save</button>
+      </div>
+
+      <!-- JOB DETAILS -->
+      <div class="section fade-up">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-title">📋 Job Details</span>
+          <span class="section-toggle">▲</span>
+        </div>
+        <div class="section-body">
+          <div class="grid2">
+            ${field('Job Number *','jobNumber',j.jobNumber,'text','e.g. JB-2024-001')}
+            ${field('Site Reference','siteReference',j.siteReference,'text','Site ref / WO')}
+            ${field('Certificate Number','certNumber',j.certNumber,'text','')}
+            ${select('Status','status',j.status,['Draft','In Progress','Complete','Submitted'])}
+            ${field('Job Date','jobDate',j.jobDate,'date','')}
+            ${select('Voltage','voltage',j.voltage,voltages)}
+          </div>
+          ${select('Network Operator','networkOperator',j.networkOperator,networks)}
+          ${field('Network Operator Ref / WO Number','networkRef',j.networkRef,'text','DNO ref / work order')}
+          <div class="field">
+            <label>☁️ Cloud Sync Target for this Job</label>
+            <select onchange="updateJob('syncTarget',this.value)">
+              <option value="onedrive" ${(j.syncTarget||DB.getSettings().defaultCloud||'onedrive')==='onedrive'?'selected':''}>🔵 OneDrive (Microsoft 365)</option>
+              <option value="gdrive" ${(j.syncTarget||DB.getSettings().defaultCloud||'onedrive')==='gdrive'?'selected':''}>🟢 Google Drive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SITE -->
+      <div class="section fade-up">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-title">📍 Site Information</span>
+          <span class="section-toggle">▲</span>
+        </div>
+        <div class="section-body">
+          ${field('Site Name *','siteName',j.siteName,'text','')}
+          ${field('Site Address','siteAddress',j.siteAddress,'text','')}
+          <div class="grid2">
+            ${field('Postcode','sitePostcode',j.sitePostcode,'text','')}
+            ${field('MPAN','mpan',j.mpan,'text','')}
+            ${field('Substation Reference','substationRef',j.substationRef,'text','')}
+            ${field('Metering Point Ref','meteringPoint',j.meteringPoint,'text','')}
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL -->
+      <div class="section fade-up">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-title">🔌 Panel / Switchgear</span>
+          <span class="section-toggle">▲</span>
+        </div>
+        <div class="section-body">
+          <div class="grid2">
+            ${field('Panel Make','panelMake',j.panelMake,'text','e.g. ABB, Schneider')}
+            ${field('Panel Model / Type','panelModel',j.panelModel,'text','')}
+            ${field('Panel Serial No.','panelSerialNumber',j.panelSerialNumber,'text','')}
+            ${field('Year of Manufacture','panelYear',j.panelYear,'text','')}
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENT -->
+      <div class="section fade-up">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-title">🏢 Client & Contractor</span>
+          <span class="section-toggle">▲</span>
+        </div>
+        <div class="section-body">
+          <div class="grid2">
+            ${field('Client Name','clientName',j.clientName,'text','')}
+            ${field('Client Contact','clientContact',j.clientContact,'text','')}
+          </div>
+          ${field('Client Address','clientAddress',j.clientAddress,'text','')}
+          <hr class="divider"/>
+          ${field('Contractor Company','contractorName',j.contractorName,'text','')}
+          ${field('Contractor Address','contractorAddress',j.contractorAddress,'text','')}
+          <div class="grid2">
+            ${field('Authorised Engineer','authorisedEngineer',j.authorisedEngineer,'text','')}
+            ${field('Engineer Ref / ID','engineerRef',j.engineerRef,'text','')}
+          </div>
+        </div>
+      </div>
+
+      <!-- CTs -->
+      <div class="section fade-up">
+        <div class="section-header">
+          <span class="section-title">⚡ Current Transformers (${j.cts.length})</span>
+        </div>
+        <div class="section-body" id="ct-list">
+          ${j.cts.map((ct, i) => renderCTBlock(ct, i, phases, accuracyClasses)).join('')}
+          <button class="btn btn-ghost" style="width:100%;margin-top:4px" onclick="addCT()">+ Add CT</button>
+        </div>
+      </div>
+
+      <!-- SITE PHOTOS -->
+      <div class="section fade-up">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-title">📸 Site Photos</span>
+          <span class="section-toggle">▲</span>
+        </div>
+        <div class="section-body">
+          <div class="photo-actions">
+            <button class="btn btn-ghost btn-sm" onclick="capturePhoto('job','job',true)">📷 Camera</button>
+            <button class="btn btn-ghost btn-sm" onclick="capturePhoto('job','job',false)">🖼 Gallery</button>
+          </div>
+          <input type="file" id="photo-input-job-job" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(event,'job','job')" />
+          <div class="photo-grid">
+            ${(j.photos||[]).map(p=>renderPhotoThumb(p,'job','job')).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- CERTIFICATES -->
+      <div class="section fade-up">
+        <div class="section-header">
+          <span class="section-title">📄 Generate Certificates</span>
+        </div>
+        <div class="section-body">
+          <button class="cert-btn" onclick="openCert('company')">
+            <div class="cert-btn-title">🏢 Company CT Test Certificate</div>
+            <div class="cert-btn-sub">Your company branded test &amp; commissioning certificate</div>
+          </button>
+          <button class="cert-btn" onclick="openCert('dno')">
+            <div class="cert-btn-title">⚡ DNO / Network Operator Certificate</div>
+            <div class="cert-btn-sub">Tailored for ${e(j.networkOperator||'selected DNO')} submission</div>
+          </button>
+          <button class="cert-btn" onclick="openCert('ners')">
+            <div class="cert-btn-title">📋 NERS Compliant Test Certificate</div>
+            <div class="cert-btn-sub">ENA / NERS scheme compliant format</div>
+          </button>
+          <button class="cert-btn" onclick="openCert('nged')">
+            <div class="cert-btn-title">🔴 NGED Metering Certificate</div>
+            <div class="cert-btn-sub">National Grid Electricity Distribution format</div>
+          </button>
+          <button class="cert-btn" onclick="openCert('spen')">
+            <div class="cert-btn-title">🔵 SP Energy Networks Certificate</div>
+            <div class="cert-btn-sub">SPEN HV metering test format</div>
+          </button>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">💡 Save job before generating. Use Print → Save as PDF to export.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCTBlock(ct, i, phases, accuracyClasses) {
+  const resultClass = {'Pass':'badge-pass','Fail':'badge-fail','Advisory':'badge-advisory'}[ct.testResult]||'badge-pass';
+  return `
+  <div class="ct-block" id="ct-${ct.id}">
+    <div class="ct-header">
+      <span class="ct-label">CT #${i+1} — ${e(ct.phaseLabel)}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge ${resultClass}">${e(ct.testResult)}</span>
+        ${i>0?`<button class="btn btn-danger btn-sm" onclick="removeCT('${ct.id}')">Remove</button>`:''}
+      </div>
+    </div>
+
+    <span class="sub-label">Equipment Details</span>
+    <div class="grid2">
+      ${ctField(ct,'CT Serial Number *','serialNumber','text','CT s/n')}
+      ${ctField(ct,'Panel Serial Number','panelSerialNumber','text','Panel s/n')}
+      ${ctSelect(ct,'Phase','phaseLabel',phases)}
+      ${ctField(ct,'Location / Bay','location','text','e.g. Feeder 1')}
+      ${ctField(ct,'Manufacturer','manufacturer','text','e.g. ABB, GE')}
+      ${ctField(ct,'Ratio','ratio','text','e.g. 200/5')}
+      ${ctField(ct,'Burden (VA)','burden','text','e.g. 15')}
+      ${ctSelect(ct,'Accuracy Class','accuracyClass',accuracyClasses)}
+    </div>
+
+    <hr class="divider"/>
+    <span class="sub-label">Test Results</span>
+    <div class="grid2">
+      ${ctField(ct,'Primary Current Applied (A)','primaryCurrentApplied','number','')}
+      ${ctField(ct,'Secondary Current Measured (A)','secondaryCurrentMeasured','number','')}
+      ${ctField(ct,'Ratio Error (%)','ratioErrorPercent','number','')}
+      ${ctField(ct,'Phase Displacement (min)','phaseDisplacementMin','number','')}
+      ${ctField(ct,'Magnetising Current (mA)','magnetisingCurrentMa','number','')}
+      ${ctField(ct,'Insulation Resistance (MΩ)','insulationResistanceMohm','number','')}
+      ${ctField(ct,'Knee Point Voltage (V)','kneePointVoltage','number','')}
+      ${ctField(ct,'Excitation @ Knee (mA)','excitationCurrentKnee','number','')}
+      ${ctField(ct,'DC Winding Resistance (Ω)','dcResistanceOhm','number','')}
+      ${ctSelect(ct,'Polarity','polarity',['Correct','Incorrect'])}
+      ${ctField(ct,'Test Date','testDate','date','')}
+      ${ctField(ct,'Test Engineer','testEngineer','text','')}
+      ${ctSelect(ct,'Overall Result','testResult',['Pass','Fail','Advisory'])}
+    </div>
+    <div class="field"><label>Notes</label><textarea rows="2" onchange="updateCTField('${ct.id}','notes',this.value)">${e(ct.notes)}</textarea></div>
+
+    <hr class="divider"/>
+    <span class="sub-label">CT Photos</span>
+    <div class="photo-actions">
+      <button class="btn btn-ghost btn-sm" onclick="capturePhoto('ct','${ct.id}',true)">📷 Camera</button>
+      <button class="btn btn-ghost btn-sm" onclick="capturePhoto('ct','${ct.id}',false)">🖼 Gallery</button>
+    </div>
+    <input type="file" id="photo-input-ct-${ct.id}" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(event,'ct','${ct.id}')" />
+    <div class="photo-grid">
+      ${(ct.photos||[]).map(p=>renderPhotoThumb(p,'ct',ct.id)).join('')}
+    </div>
+  </div>`;
+}
+
+// ── Field helpers ──
+function e(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function field(label, key, value, type, placeholder) {
+  return `<div class="field"><label>${label}</label>
+    <input type="${type}" value="${e(value)}" placeholder="${e(placeholder)}" onchange="updateJob('${key}',this.value)" /></div>`;
+}
+function select(label, key, value, opts) {
+  return `<div class="field"><label>${label}</label><select onchange="updateJob('${key}',this.value)">${opts.map(o=>`<option value="${e(o)}" ${o===value?'selected':''}>${e(o)}</option>`).join('')}</select></div>`;
+}
+function ctField(ct, label, key, type, placeholder) {
+  return `<div class="field"><label>${label}</label>
+    <input type="${type}" value="${e(ct[key])}" placeholder="${e(placeholder)}" onchange="updateCTField('${ct.id}','${key}',this.value)" /></div>`;
+}
+function ctSelect(ct, label, key, opts) {
+  return `<div class="field"><label>${label}</label><select onchange="updateCTField('${ct.id}','${key}',this.value)">${opts.map(o=>`<option value="${e(o)}" ${o===ct[key]?'selected':''}>${e(o)}</option>`).join('')}</select></div>`;
+}
+
+// ── Job mutations ──
+function updateJob(key, val) { state.job[key] = val; }
+function updateCTField(ctId, key, val) { const ct = state.job.cts.find(c=>c.id===ctId); if (ct) ct[key] = val; }
+function addCT() { state.job.cts.push(blankCT()); render(); }
+function removeCT(ctId) { state.job.cts = state.job.cts.filter(c=>c.id!==ctId); render(); }
+
+function saveJob() {
+  DB.upsertJob(state.job);
+  document.getElementById('save-btn').textContent = '✓ Saved';
+  document.getElementById('save-btn').style.background = 'var(--green)';
+  setTimeout(()=>{ const b=document.getElementById('save-btn'); if(b){b.textContent='Save';b.style.background='';} },2000);
+  showToast('Job saved ✓');
+}
+
+function backToList() {
+  const hasChanges = JSON.stringify(state.job) !== JSON.stringify(DB.getJob(state.job.id));
+  if (hasChanges && !confirm('Unsaved changes will be lost. Continue?')) return;
+  state.set({ page: 'list', job: null, jobId: null });
+  render();
+  window.scrollTo(0,0);
+}
+
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  const toggle = header.querySelector('.section-toggle');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (toggle) toggle.textContent = hidden ? '▲' : '▼';
+}
+
+// ── Photos ──
+function capturePhoto(scope, id, camera) {
+  const inp = document.getElementById(`photo-input-${scope}-${id}`);
+  if (!inp) return;
+  if (camera) inp.setAttribute('capture','environment'); else inp.removeAttribute('capture');
+  inp.click();
+}
+
+function handlePhotoInput(event, scope, id) {
+  const files = Array.from(event.target.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const photo = { id: uid(), dataUrl: ev.target.result, name: file.name, takenAt: new Date().toISOString() };
+      if (scope === 'job') { state.job.photos = [...(state.job.photos||[]), photo]; }
+      else { const ct = state.job.cts.find(c=>c.id===id); if (ct) ct.photos = [...(ct.photos||[]), photo]; }
+      loaded++;
+      if (loaded === files.length) render();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function removePhoto(photoId, scope, id) {
+  if (scope === 'job') { state.job.photos = state.job.photos.filter(p=>p.id!==photoId); }
+  else { const ct = state.job.cts.find(c=>c.id===id); if (ct) ct.photos = ct.photos.filter(p=>p.id!==photoId); }
+  render();
+}
+
+function viewPhoto(photoId, scope, id) {
+  let photo;
+  if (scope === 'job') photo = state.job.photos.find(p=>p.id===photoId);
+  else { const ct = state.job.cts.find(c=>c.id===id); photo = ct?.photos?.find(p=>p.id===photoId); }
+  if (!photo) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:300;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px" /><button onclick="this.parentElement.remove()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer">✕</button>`;
+  document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CERTIFICATE PAGE
+// ═══════════════════════════════════════════════════════════════════
+function openCert(type) {
+  saveJob();
+  state.set({ page: 'cert', certType: type });
+  render();
+  window.scrollTo(0,0);
+}
+
+const CERT_INFO = {
+  company: { name: 'Company CT Test Certificate', stripe: '' },
+  dno:     { name: 'DNO / Network Operator Certificate', stripe: '' },
+  ners:    { name: 'NERS Compliant CT Test Certificate', stripe: '' },
+  nged:    { name: 'NGED Metering CT Certificate', stripe: 'nged-stripe' },
+  spen:    { name: 'SP Energy Networks CT Certificate', stripe: 'spen-stripe' },
+};
+
+function renderCert() {
+  const j = state.job || DB.getJob(state.jobId);
+  if (!j) { state.set({page:'list'}); render(); return; }
+  const type = state.certType;
+  const info = CERT_INFO[type] || CERT_INFO.company;
+  const settings = DB.getSettings();
+  const allPass = j.cts.every(ct=>ct.testResult==='Pass');
+  const anyFail = j.cts.some(ct=>ct.testResult==='Fail');
+  const issueDate = new Date().toLocaleDateString('en-GB');
+  const certNo = j.certNumber || ('CTM-' + j.id.slice(-6).toUpperCase());
+
+  const F = (l,v) => `<div class="c-cell"><div class="c-label">${l}</div><div class="c-val">${v||'&nbsp;'}</div></div>`;
+
+  // Build DNO-specific content
+  let networkBox = '';
+  if (type === 'nged' || type === 'dno') {
+    networkBox = `
+      <div class="network-header ${info.stripe}">
+        <strong>${type==='nged'?'National Grid Electricity Distribution (NGED)':e(j.networkOperator||'Network Operator')}</strong>
+        &nbsp;&mdash;&nbsp; HV Metering CT Test &amp; Commissioning Certificate
+      </div>`;
+  }
+
+  const certHTML = `
+    <div id="cert-page" class="${info.stripe}">
+      <div class="cert-logo-row">
+        ${settings.logoDataUrl ? `<img src="${settings.logoDataUrl}" style="max-height:52px;max-width:140px;object-fit:contain" alt="Company Logo"/>` : `<div class="cert-logo-placeholder">COMPANY LOGO</div>`}
+        <div style="text-align:right;font-size:9px;color:#555;line-height:1.6">
+          ${settings.companyName?`<strong>${e(settings.companyName)}</strong><br>`:''}
+          ${settings.companyAddress?e(settings.companyAddress)+'<br>':''}
+          ${settings.nersNumber?`NERS Accreditation: <strong>${e(settings.nersNumber)}</strong><br>`:''}
+          ${settings.companyReg?`Co. Reg: ${e(settings.companyReg)}<br>`:''}
+        </div>
+      </div>
+
+      ${networkBox}
+
+      <div class="cert-meta">
+        <h1>${info.name}</h1>
+        <div style="margin-top:4px">Certificate No: <strong>${certNo}</strong> &nbsp;|&nbsp; Date Issued: <strong>${issueDate}</strong> &nbsp;|&nbsp; Status: <strong>${j.status}</strong></div>
+      </div>
+
+      <h2>1. Job &amp; Site Details</h2>
+      <div class="c-row">${F('Job Number',j.jobNumber)}${F('Site Reference',j.siteReference)}</div>
+      <div class="c-row">${F('Site Name',j.siteName)}${F('Test Date',fmtDate(j.jobDate))}</div>
+      <div class="c-row">${F('Site Address',j.siteAddress+(j.sitePostcode?' '+j.sitePostcode:''))}${F('System Voltage',j.voltage)}</div>
+      <div class="c-row">${F('MPAN',j.mpan)}${F('Metering Point Ref',j.meteringPoint)}</div>
+      <div class="c-row">${F('Substation Reference',j.substationRef)}${F('Network Operator',j.networkOperator)}</div>
+      ${j.networkRef?`<div class="c-row">${F('DNO Work Order / Ref',j.networkRef)}${F('','')}</div>`:''}
+
+      <h2>2. Panel &amp; Switchgear</h2>
+      <div class="c-row">${F('Panel Make',j.panelMake)}${F('Panel Model / Type',j.panelModel)}</div>
+      <div class="c-row">${F('Panel Serial Number',j.panelSerialNumber)}${F('Year of Manufacture',j.panelYear)}</div>
+
+      <h2>3. CT Test Data</h2>
+      <table>
+        <thead><tr>
+          <th>Phase</th><th>CT Serial No.</th><th>Panel S/N</th><th>Manufacturer</th>
+          <th>Ratio</th><th>Burden (VA)</th><th>Class</th>
+          <th>Primary (A)</th><th>Secondary (A)</th><th>Ratio Err (%)</th>
+          <th>Phase Disp. (min)</th><th>Mag I (mA)</th><th>IR (MΩ)</th>
+          <th>Knee V</th><th>DC Res (Ω)</th><th>Polarity</th><th>Result</th>
+        </tr></thead>
+        <tbody>
+          ${j.cts.map(ct=>`<tr>
+            <td>${e(ct.phaseLabel)}</td><td>${e(ct.serialNumber)}</td><td>${e(ct.panelSerialNumber)}</td>
+            <td>${e(ct.manufacturer)}</td><td>${e(ct.ratio)}</td><td>${e(ct.burden)}</td><td>${e(ct.accuracyClass)}</td>
+            <td>${e(ct.primaryCurrentApplied)}</td><td>${e(ct.secondaryCurrentMeasured)}</td>
+            <td>${e(ct.ratioErrorPercent)}</td><td>${e(ct.phaseDisplacementMin)}</td>
+            <td>${e(ct.magnetisingCurrentMa)}</td><td>${e(ct.insulationResistanceMohm)}</td>
+            <td>${e(ct.kneePointVoltage)}</td><td>${e(ct.dcResistanceOhm)}</td>
+            <td>${e(ct.polarity)}</td>
+            <td class="${ct.testResult==='Pass'?'pass':ct.testResult==='Fail'?'fail':'advisory'}">${e(ct.testResult)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+
+      <div class="result-box ${allPass?'result-pass':'result-fail'}">
+        ${allPass ? '✓ ALL CURRENT TRANSFORMERS — PASS' : anyFail ? '✗ ONE OR MORE CURRENT TRANSFORMERS — FAIL' : '⚠ ADVISORY ITEMS — REVIEW REQUIRED'}
+      </div>
+
+      <h2>4. Client &amp; Contractor</h2>
+      <div class="c-row">${F('Client Name',j.clientName)}${F('Client Contact',j.clientContact)}</div>
+      <div class="c-row">${F('Client Address',j.clientAddress)}${F('','')} </div>
+      <div class="c-row">${F('Contractor',j.contractorName || settings.companyName)}${F('Contractor Address',j.contractorAddress || settings.companyAddress)}</div>
+      <div class="c-row">${F('Authorised Engineer',j.authorisedEngineer || settings.signatoryName)}${F('Engineer Ref / ID',j.engineerRef)}</div>
+      ${settings.nersNumber?`<div class="c-row">${F('NERS Accreditation Number',settings.nersNumber)}${F('','')} </div>`:''}
+
+      ${type==='ners'?`
+      <div class="disclaimer">
+        <strong>NERS Compliance Statement:</strong> This certificate is issued in compliance with the National Electricity Registration Scheme (NERS) requirements. All tests have been carried out in accordance with BS EN 61869-2:2012, BS EN 61869-1:2009, and the relevant Distribution Network Operator's Technical Specification. The contractor holds NERS accreditation and all work has been carried out by suitably qualified and authorised personnel.
+      </div>`:''}
+
+      ${type==='nged'?`
+      <div class="disclaimer">
+        <strong>NGED Notice:</strong> This certificate is issued for submission to National Grid Electricity Distribution (NGED) in accordance with their Connection and Use of System Code (CUSC) and relevant Metering Technical Specifications. Accuracy class and burden requirements have been verified against NGED metering specifications.
+      </div>`:''}
+
+      ${type==='spen'?`
+      <div class="disclaimer">
+        <strong>SPEN Notice:</strong> This certificate is issued for submission to SP Energy Networks (SPEN) in accordance with their technical and operational requirements for HV metering installations. All CTs have been tested and verified against the relevant SPEN technical specifications.
+      </div>`:''}
+
+      <div class="sig-row">
+        <div class="sig-box">Authorised Engineer Signature<br><br><br><br>${e(j.authorisedEngineer||settings.signatoryName||'')}<br>${e(settings.signatoryTitle||'')}</div>
+        <div class="sig-box">Client / DNO Representative Signature<br><br><br><br>Name:<br>Date: ${issueDate}</div>
+        <div class="sig-box">Company Stamp / Seal<br><br><br><br><br>&nbsp;</div>
+      </div>
+
+      ${(j.photos||[]).length > 0 || j.cts.some(ct=>(ct.photos||[]).length>0) ? `
+      <h2>5. Site &amp; CT Photographs</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        ${(j.photos||[]).slice(0,6).map(p=>`<img src="${p.dataUrl}" style="width:120px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #ccc" />`).join('')}
+        ${j.cts.flatMap(ct=>(ct.photos||[]).slice(0,2)).slice(0,6).map(p=>`<img src="${p.dataUrl}" style="width:120px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #ccc" />`).join('')}
+      </div>` : ''}
+
+    </div>`;
+
+  app.innerHTML = `
+    <div>
+      <div class="cert-overlay">
+        <div class="cert-actions">
+          <button class="btn btn-ghost" onclick="state.set({page:'job'}); render(); window.scrollTo(0,0);">← Back to Job</button>
+          <button class="btn btn-primary" onclick="printCert()">🖨 Print / Save PDF</button>
+        </div>
+        ${certHTML}
+      </div>
+    </div>`;
+}
+
+function printCert() {
+  const content = document.getElementById('cert-page')?.outerHTML || '';
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>CT Certificate</title><style>
+    *{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:20px;background:white;}
+    h1{font-size:16px;font-weight:bold;text-align:center;margin-bottom:3px;}
+    h2{font-size:12px;font-weight:bold;background:#1a2035;color:white;padding:5px 10px;margin:14px 0 8px;}
+    table{width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:12px;}
+    th{background:#1a2035;color:white;padding:4px 5px;text-align:left;border:1px solid #aaa;font-size:9px;}
+    td{padding:3px 5px;border:1px solid #ccc;vertical-align:middle;}
+    tr:nth-child(even) td{background:#f4f7fb;}
+    .pass{color:green;font-weight:bold;}.fail{color:red;font-weight:bold;}.advisory{color:orange;font-weight:bold;}
+    .c-row{display:flex;gap:16px;margin-bottom:5px;}.c-cell{flex:1;}
+    .c-label{font-size:9px;font-weight:bold;color:#555;text-transform:uppercase;letter-spacing:.05em;}
+    .c-val{font-size:11px;border-bottom:1px solid #ccc;min-height:14px;padding-bottom:1px;}
+    .cert-meta{text-align:center;font-size:10px;color:#444;border-bottom:2px solid #1a2035;padding-bottom:10px;margin-bottom:4px;}
+    .cert-logo-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+    .result-box{padding:8px 14px;border-radius:4px;text-align:center;font-weight:bold;font-size:13px;margin-bottom:12px;border:2px solid;}
+    .result-pass{background:#f0fdf4;color:green;border-color:green;}.result-fail{background:#fef2f2;color:red;border-color:red;}
+    .sig-row{display:flex;gap:24px;margin-top:20px;}.sig-box{flex:1;border-top:2px solid #333;padding-top:4px;font-size:9px;color:#555;}
+    .network-header{background:#1a2035;color:white;padding:10px 14px;margin-bottom:10px;}
+    .disclaimer{margin-top:14px;padding:8px 10px;border:1px solid #ddd;font-size:8.5px;color:#666;}
+    img{max-width:100%;}
+    @media print{@page{margin:1.5cm;}body{padding:0;}}
+  </style></head><body>${content}</body></html>`);
+  w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SETTINGS PAGE
+// ═══════════════════════════════════════════════════════════════════
+function renderSettings() {
+  const s = DB.getSettings();
+
+  app.innerHTML = `
+    <div style="padding-bottom:calc(40px + var(--safe-bottom))">
+      <div class="sticky-header">
+        <button class="btn-back" onclick="state.set({page:'list'}); render(); window.scrollTo(0,0);">←</button>
+        <div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text)">Settings</div>
+          <div style="font-size:11px;color:var(--text3)">Company profile &amp; preferences</div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+      </div>
+
+      <div class="install-card fade-up">
+        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">📱 Install as Android App</div>
+        <div class="install-step"><div class="install-num">1</div><div class="install-text">Open this page in <strong>Chrome</strong> on your Android phone</div></div>
+        <div class="install-step"><div class="install-num">2</div><div class="install-text">Tap the <strong>⋮ menu</strong> (top-right)</div></div>
+        <div class="install-step"><div class="install-num">3</div><div class="install-text">Tap <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></div></div>
+        <div class="install-step" style="margin-bottom:0"><div class="install-num">4</div><div class="install-text">App installs and <strong>works offline</strong> — data saved on device</div></div>
+      </div>
+
+      <div class="section fade-up">
+        <div class="section-header"><span class="section-title">🏢 Company Profile</span></div>
+        <div class="section-body">
+          <div style="margin-bottom:14px">
+            <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:6px">Company Logo</div>
+            <div class="settings-logo" onclick="document.getElementById('logo-input').click()">
+              ${s.logoDataUrl ? `<img src="${s.logoDataUrl}" alt="Logo" />` : `<span style="color:var(--text3);font-size:13px">Tap to upload logo</span>`}
+            </div>
+            <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="uploadLogo(event)" />
+            ${s.logoDataUrl?`<button class="btn btn-danger btn-sm" onclick="removeLogo()" style="margin-top:6px">Remove Logo</button>`:''}
+          </div>
+          <div class="grid2">
+            ${sField('Company Name','companyName',s.companyName||'','text')}
+            ${sField('Company Reg Number','companyReg',s.companyReg||'','text')}
+            ${sField('NERS Accreditation No.','nersNumber',s.nersNumber||'','text')}
+            ${sField('Default Authorised Engineer','signatoryName',s.signatoryName||'','text')}
+            ${sField('Engineer Title / Role','signatoryTitle',s.signatoryTitle||'','text','e.g. HV Engineer')}
+          </div>
+          ${sField('Company Address','companyAddress',s.companyAddress||'','text')}
+          ${sField('Company Email','companyEmail',s.companyEmail||'','email')}
+          ${sField('Company Phone','companyPhone',s.companyPhone||'','tel')}
+        </div>
+      </div>
+
+      <div class="section fade-up">
+        <div class="section-header"><span class="section-title">📄 Certificate Defaults</span></div>
+        <div class="section-body">
+          <div class="grid2">
+            ${sField('Default Cert Number Prefix','certPrefix',s.certPrefix||'CTM-','text')}
+            ${sField('Default Network Operator','defaultNetwork',s.defaultNetwork||'NGED','text')}
+          </div>
+          ${sField('Insurance / Indemnity Details (printed on certs)','insuranceDetails',s.insuranceDetails||'','text')}
+          <div class="field"><label>Certificate Footer Text</label>
+            <textarea rows="2" id="s-certFooter">${e(s.certFooter||'')}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section fade-up">
+        <div class="section-header"><span class="section-title">☁️ Cloud Sync</span></div>
+        <div class="section-body">
+          <div class="field">
+            <label>Default Cloud Target (new jobs)</label>
+            <select id="s-defaultCloud">
+              <option value="onedrive" ${(s.defaultCloud||'onedrive')==='onedrive'?'selected':''}>🔵 OneDrive (Microsoft 365)</option>
+              <option value="gdrive" ${s.defaultCloud==='gdrive'?'selected':''}>🟢 Google Drive</option>
+            </select>
+          </div>
+
+          <!-- OneDrive provider card -->
+          <div class="onedrive-card" style="margin-bottom:14px">
+            ${OD.isSignedIn() ? `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <span style="font-size:22px">🔵</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">OneDrive Connected</div>
+                  <div style="font-size:11px;color:var(--text3)">${OD.getUserName()}</div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="OD.signOut()">Sign Out</button>
+              </div>
+            ` : `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font-size:22px">🔵</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">Microsoft OneDrive</div>
+                  <div style="font-size:11px;color:var(--text3)">Works with M365 Personal, Family, or Business</div>
+                </div>
+                ${OD.isConfigured() ? `<button class="btn btn-primary btn-sm" onclick="OD.signIn()">Sign In</button>` : ''}
+              </div>
+              ${!OD.isConfigured() ? `<div style="font-size:11px;color:var(--amber);margin-bottom:6px">⚠ Enter Azure Client ID below</div>` : ''}
+            `}
+            ${sField('Azure Client ID','msalClientId',s.msalClientId||'','text','Paste your Azure App Client ID')}
+            <div style="font-size:10px;color:var(--text3);line-height:1.5;margin-top:-4px">
+              portal.azure.com → App registrations → New<br>
+              Account type: <em>Accounts in any org directory AND personal Microsoft accounts</em><br>
+              Redirect URI (SPA): <span style="color:var(--accent)">${window.location.origin}</span>
+            </div>
+          </div>
+
+          <!-- Google Drive provider card -->
+          <div style="background:linear-gradient(135deg,rgba(52,168,83,0.15),rgba(15,157,88,0.08));border:1px solid rgba(52,168,83,0.35);border-radius:14px;padding:16px;margin-bottom:14px">
+            ${GD.isSignedIn() ? `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <span style="font-size:22px">🟢</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green)">Google Drive Connected</div>
+                  <div style="font-size:11px;color:var(--text3)">${GD.getUserName()}</div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="GD.signOut()">Sign Out</button>
+              </div>
+            ` : `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font-size:22px">🟢</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">Google Drive</div>
+                  <div style="font-size:11px;color:var(--text3)">15GB free, any Google account</div>
+                </div>
+                ${GD.isConfigured() ? `<button class="btn btn-success btn-sm" onclick="GD.signIn()">Sign In</button>` : ''}
+              </div>
+              ${!GD.isConfigured() ? `<div style="font-size:11px;color:var(--amber);margin-bottom:6px">⚠ Enter Google Client ID below</div>` : ''}
+            `}
+            ${sField('Google OAuth Client ID','gdriveClientId',s.gdriveClientId||'','text','Paste your Google OAuth Client ID')}
+            <div style="font-size:10px;color:var(--text3);line-height:1.5;margin-top:-4px">
+              console.cloud.google.com → Credentials → Create Credentials → OAuth client ID<br>
+              Type: <em>Web application</em><br>
+              Authorized JS origin: <span style="color:var(--green)">${window.location.origin}</span><br>
+              Enable: <em>Google Drive API</em>
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text3);line-height:1.5">
+            💡 Each job has its own "Cloud Sync Target" selector. Save jobs to whichever drive makes sense — site photos to Drive, client deliverables to OneDrive, etc.
+          </div>
+        </div>
+      </div>
+
+      <div class="section fade-up">
+        <div class="section-header"><span class="section-title">🗄 Local Data Management</span></div>
+        <div class="section-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="exportData()">📤 Export All Data (JSON)</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('import-input').click()">📥 Import Data</button>
+            <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)" />
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:var(--text3)">
+            Job data (no photos) is stored locally. Once synced to OneDrive, photo data is removed from device storage. Export as a backup of job records.
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function sField(label, key, value, type, placeholder) {
+  return `<div class="field"><label>${label}</label>
+    <input type="${type||'text'}" id="s-${key}" value="${e(value)}" placeholder="${e(placeholder||'')}" /></div>`;
+}
+
+function uploadLogo(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { const s = DB.getSettings(); s.logoDataUrl = ev.target.result; DB.saveSettings(s); renderSettings(); };
+  reader.readAsDataURL(file);
+}
+function removeLogo() { const s = DB.getSettings(); delete s.logoDataUrl; DB.saveSettings(s); renderSettings(); }
+
+function saveSettings() {
+  const fields = ['companyName','companyReg','nersNumber','signatoryName','signatoryTitle','companyAddress','companyEmail','companyPhone','certPrefix','defaultNetwork','insuranceDetails','msalClientId','gdriveClientId'];
+  const s = DB.getSettings();
+  fields.forEach(k => { const el = document.getElementById('s-'+k); if (el) s[k] = el.value; });
+  const footer = document.getElementById('s-certFooter'); if (footer) s.certFooter = footer.value;
+  const dc = document.getElementById('s-defaultCloud'); if (dc) s.defaultCloud = dc.value;
+  DB.saveSettings(s);
+  showToast('Settings saved ✓');
+}
+
+function exportData() {
+  const data = { jobs: DB.getJobs(), settings: DB.getSettings(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `ct-manager-backup-${today()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported ✓');
+}
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.jobs) DB.saveJobs(data.jobs);
+      if (data.settings) DB.saveSettings(data.settings);
+      showToast(`Imported ${data.jobs?.length||0} jobs ✓`);
+      renderSettings();
+    } catch { showToast('Import failed — invalid file'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PHOTO UTILITIES
+// ═══════════════════════════════════════════════════════════════════
+
+// Compress image to max 1200px wide, ~85% quality JPEG — reduces 4MB → ~150KB
+function compressImage(dataUrl, maxPx = 1200) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => resolve(dataUrl); // fallback uncompressed
+    img.src = dataUrl;
+  });
+}
+
+// Save a photo dataUrl to the device's downloads / gallery
+function savePhotoToDevice(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename || `ct-photo-${Date.now()}.jpg`;
+  a.click();
+  showToast('Photo saved to device ✓');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ONEDRIVE / MICROSOFT GRAPH INTEGRATION
+// ═══════════════════════════════════════════════════════════════════
+
+const OD = {
+  // ── MSAL config — replace clientId with your Azure App Registration ID ──
+  // See README for how to register a free Azure app (5 minutes)
+  clientId: DB.getSettings().msalClientId || 'YOUR_CLIENT_ID',
+  authority: 'https://login.microsoftonline.com/common',
+  scopes: ['Files.ReadWrite', 'User.Read'],
+  folderBase: 'CT Manager',
+
+  _msal: null,
+  _account: null,
+  _token: null,
+  _syncStatus: 'idle', // idle | syncing | synced | error
+  _lastSync: null,
+
+  getMSAL() {
+    if (!this._msal) {
+      const clientId = DB.getSettings().msalClientId;
+      if (!clientId || clientId === 'YOUR_CLIENT_ID') return null;
+      this._msal = new msal.PublicClientApplication({
+        auth: { clientId, authority: this.authority, redirectUri: window.location.origin },
+        cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false },
+      });
+    }
+    return this._msal;
+  },
+
+  isConfigured() { const s = DB.getSettings(); return !!(s.msalClientId && s.msalClientId !== 'YOUR_CLIENT_ID'); },
+  isSignedIn() { return !!this._account; },
+
+  async init() {
+    const msalApp = this.getMSAL(); if (!msalApp) return;
+    await msalApp.initialize();
+    const resp = await msalApp.handleRedirectPromise().catch(()=>null);
+    if (resp?.account) this._account = resp.account;
+    else {
+      const accounts = msalApp.getAllAccounts();
+      if (accounts.length > 0) this._account = accounts[0];
+    }
+    if (this._account) { await this.refreshToken(); }
+  },
+
+  async signIn() {
+    const msalApp = this.getMSAL();
+    if (!msalApp) { showToast('Enter Azure Client ID in Settings first'); renderSettings(); return; }
+    try {
+      const resp = await msalApp.loginPopup({ scopes: this.scopes });
+      this._account = resp.account;
+      await this.refreshToken();
+      showToast(`Signed in as ${this._account.username} ✓`);
+      render();
+    } catch(e) { showToast('Sign in failed: ' + (e.message||e)); }
+  },
+
+  async signOut() {
+    const msalApp = this.getMSAL(); if (!msalApp) return;
+    await msalApp.logoutPopup({ account: this._account }).catch(()=>{});
+    this._account = null; this._token = null;
+    showToast('Signed out of OneDrive');
+    render();
+  },
+
+  async refreshToken() {
+    const msalApp = this.getMSAL(); if (!msalApp || !this._account) return null;
+    try {
+      const resp = await msalApp.acquireTokenSilent({ scopes: this.scopes, account: this._account });
+      this._token = resp.accessToken;
+      return this._token;
+    } catch {
+      try {
+        const resp = await msalApp.acquireTokenPopup({ scopes: this.scopes });
+        this._token = resp.accessToken; this._account = resp.account;
+        return this._token;
+      } catch(e) { showToast('Token refresh failed'); return null; }
+    }
+  },
+
+  async getToken() { return this._token || await this.refreshToken(); },
+
+  async graphRequest(method, path, body, contentType) {
+    const token = await this.getToken(); if (!token) throw new Error('Not authenticated');
+    const res = await fetch('https://graph.microsoft.com/v1.0' + path, {
+      method, headers: { 'Authorization': 'Bearer ' + token, ...(contentType ? {'Content-Type': contentType} : {}) },
+      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+    });
+    if (!res.ok) { const err = await res.text(); throw new Error(`Graph ${res.status}: ${err}`); }
+    if (res.status === 204) return null;
+    return res.json();
+  },
+
+  // Ensure folder exists in OneDrive, create if not
+  async ensureFolder(path) {
+    const parts = path.split('/').filter(Boolean);
+    let current = '/me/drive/root';
+    for (const part of parts) {
+      const encoded = encodeURIComponent(part);
+      try {
+        await this.graphRequest('GET', `${current}/children/${encoded}:/`);
+      } catch {
+        await this.graphRequest('POST', `${current}/children`, { name: part, folder: {}, '@microsoft.graph.conflictBehavior': 'rename' }, 'application/json');
+      }
+      current = `${current}/${encoded}:`;
+    }
+  },
+
+  // Upload a file (text or binary/base64)
+  async uploadFile(folderPath, filename, content, mimeType) {
+    const token = await this.getToken(); if (!token) throw new Error('Not authenticated');
+    const safeName = filename.replace(/[/\\:*?"<>|]/g, '_');
+    const uploadPath = `/me/drive/root:/${folderPath}/${safeName}:/content`;
+    let blob;
+    if (mimeType === 'application/json') {
+      blob = new Blob([content], { type: mimeType });
+    } else {
+      // Convert base64 dataUrl to blob
+      const base64 = content.split(',')[1] || content;
+      const bytes = atob(base64);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      blob = new Blob([arr], { type: mimeType || 'image/jpeg' });
+    }
+    const res = await fetch('https://graph.microsoft.com/v1.0' + uploadPath, {
+      method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': blob.type },
+      body: blob,
+    });
+    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+    return res.json();
+  },
+
+  // Upload photos for a job, return updated job with dataUrls stripped and oneDrivePath set
+  async uploadPhotos(job) {
+    const jobFolder = `${this.folderBase}/${job.jobNumber || job.id}`;
+    const photosFolder = `${jobFolder}/Photos`;
+    const allPhotos = [];
+    (job.photos||[]).forEach(p => allPhotos.push({ photo: p, scope: 'job', ctId: null, label: 'site' }));
+    job.cts.forEach((ct, i) => (ct.photos||[]).forEach(p =>
+      allPhotos.push({ photo: p, scope: 'ct', ctId: ct.id, label: `CT${i+1}-${ct.phaseLabel||''}` })
+    ));
+    const toUpload = allPhotos.filter(x => x.photo.dataUrl && !x.photo.oneDrivePath);
+    if (toUpload.length === 0) return job;
+
+    await this.ensureFolder(photosFolder);
+    // Build a map of uploaded photo ids → oneDrivePath
+    const uploaded = {};
+    for (const { photo, label } of toUpload) {
+      const ext = photo.dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+      const fname = `${label}-${photo.id}.${ext}`;
+      const odPath = `${photosFolder}/${fname}`;
+      await this.uploadFile(photosFolder, fname, photo.dataUrl, photo.dataUrl.split(';')[0].split(':')[1]);
+      uploaded[photo.id] = odPath;
+    }
+
+    // Strip dataUrls from the in-memory job and DB, set oneDrivePath instead
+    const stripPhoto = p => uploaded[p.id]
+      ? { id: p.id, name: p.name, takenAt: p.takenAt, oneDrivePath: uploaded[p.id], oneDriveSynced: true }
+      : p;
+    job.photos = (job.photos||[]).map(stripPhoto);
+    job.cts = job.cts.map(ct => ({ ...ct, photos: (ct.photos||[]).map(stripPhoto) }));
+    return job;
+  },
+
+  // Sync a single job to OneDrive — uploads photos, strips local dataUrls, persists to DB
+  async syncJob(job) {
+    const jobFolder = `${this.folderBase}/${job.jobNumber || job.id}`;
+    await this.ensureFolder(jobFolder);
+
+    // Upload any photos that haven't been synced yet, get back job with dataUrls stripped
+    const syncedJob = await this.uploadPhotos(job);
+
+    // Build lean JSON (no dataUrls)
+    const jobData = JSON.parse(JSON.stringify(syncedJob));
+    await this.uploadFile(jobFolder, `${job.jobNumber || job.id}.json`, JSON.stringify(jobData, null, 2), 'application/json');
+
+    // Persist the stripped version to local DB so device doesn't keep large dataUrls
+    DB.upsertJob(syncedJob);
+    // Update in-memory state if this is the current job being edited
+    if (state.job && state.job.id === syncedJob.id) {
+      // Merge stripped photos back into state.job without re-rendering mid-edit
+      state.job.photos = syncedJob.photos;
+      state.job.cts = state.job.cts.map((ct, i) => ({ ...ct, photos: syncedJob.cts[i]?.photos || ct.photos }));
+    }
+    return syncedJob;
+  },
+
+  // Full sync — all jobs
+  async syncAll() {
+    if (!this.isSignedIn()) { showToast('Sign in to OneDrive first'); return; }
+    this._syncStatus = 'syncing'; updateSyncBar();
+    try {
+      await this.ensureFolder(this.folderBase);
+      const jobs = DB.getJobs();
+      // Master backup (no photo dataUrls — those are in subfolders)
+      const lean = jobs.map(j => {
+        const c = JSON.parse(JSON.stringify(j));
+        c.photos = (c.photos||[]).map(p => ({ id:p.id, name:p.name, takenAt:p.takenAt, oneDrivePath:p.oneDrivePath||null }));
+        c.cts = c.cts.map(ct => ({ ...ct, photos: (ct.photos||[]).map(p => ({ id:p.id, name:p.name, takenAt:p.takenAt, oneDrivePath:p.oneDrivePath||null })) }));
+        return c;
+      });
+      await this.uploadFile(this.folderBase, 'ct-manager-all-jobs.json', JSON.stringify({ jobs: lean, exportedAt: new Date().toISOString() }, null, 2), 'application/json');
+      for (const job of jobs) { await this.syncJob(job); }
+      this._syncStatus = 'synced'; this._lastSync = new Date();
+      updateSyncBar();
+      showToast(`Synced ${jobs.length} jobs to OneDrive ✓`);
+    } catch(e) {
+      this._syncStatus = 'error'; updateSyncBar();
+      showToast('Sync failed: ' + (e.message || e));
+      console.error(e);
+    }
+  },
+
+  // Auto-sync a single job (called on save)
+  async syncJobQuick(job) {
+    if (!this.isSignedIn()) return;
+    this._syncStatus = 'syncing'; updateSyncBar();
+    try {
+      await this.syncJob(job);
+      this._syncStatus = 'synced'; this._lastSync = new Date();
+      updateSyncBar();
+    } catch(e) {
+      this._syncStatus = 'error'; updateSyncBar();
+      console.warn('Auto-sync failed:', e.message);
+    }
+  },
+
+  // Fetch a photo from OneDrive and return a temporary dataUrl for viewing
+  async loadPhotoFromOD(oneDrivePath) {
+    const token = await this.getToken(); if (!token) throw new Error('Not signed in');
+    // Convert stored path to Graph API URL
+    const encodedPath = oneDrivePath.split('/').map(encodeURIComponent).join('/');
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/${encodedPath}:/content`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
+
+  getUserName() { return this._account?.name || this._account?.username || ''; },
+  getInitial() { const n = this.getUserName(); return n ? n[0].toUpperCase() : '?'; },
+};
+
+function updateSyncBar() {
+  const bar = document.getElementById('sync-bar');
+  if (!bar) return;
+  bar.outerHTML = buildSyncBar();
+}
+
+function buildSyncBar() {
+  const odCfg = OD.isConfigured(), gdCfg = GD.isConfigured();
+  // Nothing configured at all
+  if (!odCfg && !gdCfg) return `
+    <div class="sync-bar" id="sync-bar">
+      <span style="font-size:16px">☁️</span>
+      <span class="sync-status">Cloud sync not configured</span>
+      <button class="btn btn-ghost btn-sm" onclick="state.set({page:'settings'});render()">Setup</button>
+    </div>`;
+
+  const odIn = OD.isSignedIn(), gdIn = GD.isSignedIn();
+  const status = OD._syncStatus === 'syncing' || GD._syncStatus === 'syncing' ? 'syncing'
+    : OD._syncStatus === 'error' || GD._syncStatus === 'error' ? 'error'
+    : OD._syncStatus === 'synced' || GD._syncStatus === 'synced' ? 'synced' : 'idle';
+  const statusClass = { synced:'synced', syncing:'syncing', error:'error' }[status] || '';
+  const lastSync = OD._lastSync || GD._lastSync;
+
+  // Status text
+  let statusText;
+  if (status === 'syncing') statusText = '<span class="spin">↻</span> Syncing…';
+  else if (status === 'error') statusText = 'Sync error';
+  else if (lastSync) statusText = `Synced ${lastSync.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+  else statusText = 'Cloud ready';
+
+  // Show signed-in badges
+  const badges = [];
+  if (odIn) badges.push(`<span title="OneDrive: ${OD.getUserName()}" style="font-size:12px">🔵</span>`);
+  if (gdIn) badges.push(`<span title="Drive: ${GD.getUserName()}" style="font-size:12px">🟢</span>`);
+  if (badges.length === 0) badges.push(`<span style="font-size:12px;opacity:0.5">☁️</span>`);
+
+  const signInBtns = [];
+  if (odCfg && !odIn) signInBtns.push(`<button class="btn btn-ghost btn-sm" onclick="OD.signIn()">🔵 Microsoft</button>`);
+  if (gdCfg && !gdIn) signInBtns.push(`<button class="btn btn-ghost btn-sm" onclick="GD.signIn()">🟢 Google</button>`);
+
+  return `
+    <div class="sync-bar" id="sync-bar">
+      <span style="display:flex;gap:4px;align-items:center">${badges.join('')}</span>
+      <span class="sync-status ${statusClass}">${statusText}</span>
+      ${signInBtns.join(' ')}
+      ${(odIn || gdIn) ? `<button class="btn btn-ghost btn-sm" onclick="Cloud.syncAll()">↑ Sync All</button>` : ''}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GOOGLE DRIVE INTEGRATION
+// ═══════════════════════════════════════════════════════════════════
+const GD = {
+  scopes: 'https://www.googleapis.com/auth/drive.file',
+  folderBase: 'CT Manager',
+
+  _tokenClient: null,
+  _token: null,
+  _expiresAt: 0,
+  _profile: null,
+  _folderId: null,        // cached id of "CT Manager" folder
+  _folderCache: {},       // path -> folderId
+  _syncStatus: 'idle',
+  _lastSync: null,
+
+  isConfigured() { return !!DB.getSettings().gdriveClientId; },
+  isSignedIn() { return !!this._token && Date.now() < this._expiresAt; },
+
+  // Initialise the GIS token client (lazy)
+  ensureClient() {
+    if (this._tokenClient) return true;
+    if (!window.google?.accounts?.oauth2) return false;
+    const cid = DB.getSettings().gdriveClientId;
+    if (!cid) return false;
+    this._tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid,
+      scope: this.scopes,
+      callback: (resp) => {
+        if (resp.error) { showToast('Google sign-in failed: ' + resp.error); return; }
+        this._token = resp.access_token;
+        this._expiresAt = Date.now() + (resp.expires_in - 60) * 1000;
+        // Fetch profile (best-effort)
+        this.fetchProfile().then(() => { render(); showToast('Connected to Google Drive ✓'); });
+      },
+    });
+    return true;
+  },
+
+  async signIn() {
+    if (!this.ensureClient()) { showToast('Enter Google Client ID in Settings first'); renderSettings(); return; }
+    this._tokenClient.requestAccessToken({ prompt: 'consent' });
+  },
+
+  signOut() {
+    if (this._token) google.accounts.oauth2.revoke(this._token, () => {});
+    this._token = null; this._expiresAt = 0; this._profile = null;
+    this._folderId = null; this._folderCache = {};
+    showToast('Signed out of Google Drive');
+    render();
+  },
+
+  async refreshIfNeeded() {
+    if (this.isSignedIn()) return this._token;
+    // Need user gesture for re-auth; trigger silent request
+    return new Promise((resolve) => {
+      if (!this.ensureClient()) return resolve(null);
+      const origCb = this._tokenClient.callback;
+      this._tokenClient.callback = (resp) => {
+        origCb(resp);
+        resolve(this._token);
+      };
+      this._tokenClient.requestAccessToken({ prompt: '' });
+    });
+  },
+
+  async fetchProfile() {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': 'Bearer ' + this._token }
+      });
+      if (res.ok) this._profile = await res.json();
+    } catch {}
+  },
+
+  getUserName() { return this._profile?.name || this._profile?.email || 'Google account'; },
+  getInitial() { const n = this.getUserName(); return n ? n[0].toUpperCase() : 'G'; },
+
+  // Find or create a folder under parentId (or root if null); returns folder id
+  async findOrCreateFolder(name, parentId) {
+    const token = await this.refreshIfNeeded(); if (!token) throw new Error('Not signed in to Google');
+    const q = `mimeType='application/vnd.google-apps.folder' and trashed=false and name='${name.replace(/'/g, "\\'")}'${parentId ? ` and '${parentId}' in parents` : " and 'root' in parents"}`;
+    const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const searchData = await searchRes.json();
+    if (searchData.files?.length > 0) return searchData.files[0].id;
+    // Create
+    const meta = { name, mimeType: 'application/vnd.google-apps.folder', ...(parentId ? { parents: [parentId] } : {}) };
+    const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(meta),
+    });
+    const created = await createRes.json();
+    return created.id;
+  },
+
+  // Resolve a path like "CT Manager/JB-001/Photos" to a folder id, creating as needed
+  async ensureFolder(path) {
+    if (this._folderCache[path]) return this._folderCache[path];
+    const parts = path.split('/').filter(Boolean);
+    let parent = null;
+    for (let i = 0; i < parts.length; i++) {
+      parent = await this.findOrCreateFolder(parts[i], parent);
+    }
+    this._folderCache[path] = parent;
+    return parent;
+  },
+
+  // Upload a file using multipart upload
+  async uploadFile(folderPath, filename, content, mimeType) {
+    const token = await this.refreshIfNeeded(); if (!token) throw new Error('Not signed in to Google');
+    const folderId = await this.ensureFolder(folderPath);
+    const safeName = filename.replace(/[/\\:*?"<>|]/g, '_');
+    let blob;
+    if (mimeType === 'application/json') {
+      blob = new Blob([content], { type: mimeType });
+    } else {
+      const base64 = content.split(',')[1] || content;
+      const bytes = atob(base64);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      blob = new Blob([arr], { type: mimeType || 'image/jpeg' });
+    }
+    // Check if file already exists in this folder (overwrite if so)
+    const q = `name='${safeName.replace(/'/g, "\\'")}' and '${folderId}' in parents and trashed=false`;
+    const exRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const exData = await exRes.json();
+    const existingId = exData.files?.[0]?.id;
+
+    const meta = { name: safeName, ...(existingId ? {} : { parents: [folderId] }) };
+    const boundary = '-------ct-manager-' + uid();
+    const delimiter = `\r\n--${boundary}\r\n`;
+    const closeDelim = `\r\n--${boundary}--`;
+
+    // Read blob as binary string for multipart
+    const blobBase64 = await new Promise(res => {
+      const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.readAsDataURL(blob);
+    });
+    const body =
+      delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(meta) +
+      delimiter + `Content-Type: ${blob.type}\r\nContent-Transfer-Encoding: base64\r\n\r\n` + blobBase64 +
+      closeDelim;
+
+    const uploadUrl = existingId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const method = existingId ? 'PATCH' : 'POST';
+    const res = await fetch(uploadUrl, {
+      method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    if (!res.ok) throw new Error(`Drive upload failed: ${res.status}`);
+    const data = await res.json();
+    return { id: data.id, path: `${folderPath}/${safeName}` };
+  },
+
+  // Upload all unsynced photos for a job, strip dataUrls, return updated job
+  async uploadPhotos(job) {
+    const jobFolder = `${this.folderBase}/${job.jobNumber || job.id}/Photos`;
+    const allPhotos = [];
+    (job.photos||[]).forEach(p => allPhotos.push({ photo: p, label: 'site' }));
+    job.cts.forEach((ct, i) => (ct.photos||[]).forEach(p =>
+      allPhotos.push({ photo: p, label: `CT${i+1}-${ct.phaseLabel||''}` })));
+    const toUpload = allPhotos.filter(x => x.photo.dataUrl && !x.photo.gdriveId);
+    if (toUpload.length === 0) return job;
+
+    const uploaded = {};
+    for (const { photo, label } of toUpload) {
+      const ext = photo.dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+      const fname = `${label}-${photo.id}.${ext}`;
+      const result = await this.uploadFile(jobFolder, fname, photo.dataUrl, photo.dataUrl.split(';')[0].split(':')[1]);
+      uploaded[photo.id] = { gdriveId: result.id, gdrivePath: result.path };
+    }
+    const strip = p => uploaded[p.id]
+      ? { id: p.id, name: p.name, takenAt: p.takenAt, gdriveId: uploaded[p.id].gdriveId, gdrivePath: uploaded[p.id].gdrivePath, cloudSynced: true, syncTarget: 'gdrive' }
+      : p;
+    job.photos = (job.photos||[]).map(strip);
+    job.cts = job.cts.map(ct => ({ ...ct, photos: (ct.photos||[]).map(strip) }));
+    return job;
+  },
+
+  async syncJob(job) {
+    const jobFolder = `${this.folderBase}/${job.jobNumber || job.id}`;
+    const syncedJob = await this.uploadPhotos(job);
+    const jobData = JSON.parse(JSON.stringify(syncedJob));
+    await this.uploadFile(jobFolder, `${job.jobNumber || job.id}.json`, JSON.stringify(jobData, null, 2), 'application/json');
+    syncedJob.syncTarget = 'gdrive';
+    DB.upsertJob(syncedJob);
+    if (state.job && state.job.id === syncedJob.id) {
+      state.job.photos = syncedJob.photos;
+      state.job.cts = state.job.cts.map((ct, i) => ({ ...ct, photos: syncedJob.cts[i]?.photos || ct.photos }));
+    }
+    return syncedJob;
+  },
+
+  async syncAll() {
+    if (!this.isSignedIn()) { showToast('Sign in to Google Drive first'); return; }
+    this._syncStatus = 'syncing'; updateSyncBar();
+    try {
+      const jobs = DB.getJobs().filter(j => (j.syncTarget || DB.getSettings().defaultCloud || 'onedrive') === 'gdrive');
+      if (jobs.length === 0) { this._syncStatus = 'idle'; updateSyncBar(); showToast('No Google Drive jobs to sync'); return; }
+      for (const job of jobs) { await this.syncJob(job); }
+      this._syncStatus = 'synced'; this._lastSync = new Date(); updateSyncBar();
+      showToast(`Synced ${jobs.length} jobs to Drive ✓`);
+    } catch(e) {
+      this._syncStatus = 'error'; updateSyncBar();
+      showToast('Drive sync failed: ' + (e.message || e));
+    }
+  },
+
+  async syncJobQuick(job) {
+    if (!this.isSignedIn()) return;
+    this._syncStatus = 'syncing'; updateSyncBar();
+    try {
+      await this.syncJob(job);
+      this._syncStatus = 'synced'; this._lastSync = new Date(); updateSyncBar();
+    } catch(e) { this._syncStatus = 'error'; updateSyncBar(); console.warn('Drive auto-sync failed', e.message); }
+  },
+
+  // Fetch a photo from Drive — uses the stored gdriveId
+  async loadPhoto(gdriveId) {
+    const token = await this.refreshIfNeeded(); if (!token) throw new Error('Not signed in to Google');
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${gdriveId}?alt=media`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error(`Drive load failed: ${res.status}`);
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// UNIFIED CLOUD LAYER — picks OneDrive or Google Drive per job
+// ═══════════════════════════════════════════════════════════════════
+const Cloud = {
+  // Determine sync target for a job
+  targetFor(job) {
+    return job?.syncTarget || DB.getSettings().defaultCloud || 'onedrive';
+  },
+  providerFor(job) {
+    return this.targetFor(job) === 'gdrive' ? GD : OD;
+  },
+  // Sync a single job to its target cloud
+  async syncJobQuick(job) {
+    const provider = this.providerFor(job);
+    if (provider.isSignedIn()) return provider.syncJobQuick(job);
+  },
+  // Sync all jobs across both clouds (grouped by target)
+  async syncAll() {
+    const jobs = DB.getJobs();
+    const odJobs = jobs.filter(j => (j.syncTarget || DB.getSettings().defaultCloud || 'onedrive') === 'onedrive');
+    const gdJobs = jobs.filter(j => (j.syncTarget || DB.getSettings().defaultCloud || 'onedrive') === 'gdrive');
+    let synced = 0, errors = [];
+    if (odJobs.length > 0 && OD.isSignedIn()) {
+      try { for (const j of odJobs) { await OD.syncJob(j); synced++; } } catch(e) { errors.push('OneDrive: ' + e.message); }
+    }
+    if (gdJobs.length > 0 && GD.isSignedIn()) {
+      try { for (const j of gdJobs) { await GD.syncJob(j); synced++; } } catch(e) { errors.push('Drive: ' + e.message); }
+    }
+    if (errors.length) showToast('Sync issues: ' + errors.join('; '));
+    else showToast(`Synced ${synced} jobs ✓`);
+    OD._lastSync = new Date(); GD._lastSync = new Date();
+    updateSyncBar();
+  },
+  // Load a photo from whichever cloud it lives on
+  async loadPhoto(photo) {
+    if (photo.gdriveId) return GD.loadPhoto(photo.gdriveId);
+    if (photo.oneDrivePath) return OD.loadPhotoFromOD(photo.oneDrivePath);
+    return null;
+  },
+  // Status summary across both
+  combinedStatus() {
+    const odReady = OD.isSignedIn();
+    const gdReady = GD.isSignedIn();
+    if (!odReady && !gdReady) return 'none';
+    if (odReady && gdReady) return 'both';
+    return odReady ? 'onedrive' : 'gdrive';
+  },
+};
+
+// ─ Override photo input handler to compress before storing ─
+const _origHandlePhotoInput = handlePhotoInput;
+async function handlePhotoInput(event, scope, id) {
+  const files = Array.from(event.target.files);
+  let loaded = 0;
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      const compressed = await compressImage(ev.target.result, 1400);
+      const photo = { id: uid(), dataUrl: compressed, name: file.name, takenAt: new Date().toISOString() };
+      if (scope === 'job') { state.job.photos = [...(state.job.photos||[]), photo]; }
+      else { const ct = state.job.cts.find(c=>c.id===id); if (ct) ct.photos = [...(ct.photos||[]), photo]; }
+      loaded++;
+      if (loaded === files.length) render();
+    };
+    reader.readAsDataURL(file);
+  }
+  event.target.value = '';
+}
+
+// ─ Photo thumbnail — handles local dataUrl AND cloud-only photos (OneDrive or Drive) ─
+function renderPhotoThumb(p, scope, ctId) {
+  if (p.dataUrl) {
+    return `
+      <div class="photo-thumb">
+        <img src="${p.dataUrl}" alt="${e(p.name||'photo')}" onclick="viewPhoto('${p.id}','${scope}','${ctId}')"/>
+        <button class="photo-del" onclick="removePhoto('${p.id}','${scope}','${ctId}')">✕</button>
+        <button class="photo-save" title="Save to device" onclick="savePhotoToDevice('${p.dataUrl}','${e(p.name||'photo.jpg')}')">⬇</button>
+      </div>`;
+  }
+  const isGD = !!p.gdriveId;
+  const isOD = !!p.oneDrivePath;
+  const hasCloud = isGD || isOD;
+  const icon = isGD ? '🟢' : isOD ? '🔵' : '📷';
+  const label = isGD ? 'Google Drive' : isOD ? 'OneDrive' : 'Pending sync';
+  return `
+    <div class="photo-thumb" style="background:var(--card2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:${hasCloud?'pointer':'default'}"
+      onclick="${hasCloud ? `viewPhotoFromOD('${p.id}','${scope}','${ctId}')` : ''}">
+      <span style="font-size:18px">${icon}</span>
+      <span style="font-size:9px;color:var(--text3);text-align:center;padding:0 4px;line-height:1.3">${label}<br>${hasCloud ? 'Tap to view' : ''}</span>
+      <button class="photo-del" onclick="event.stopPropagation();removePhoto('${p.id}','${scope}','${ctId}')">✕</button>
+    </div>`;
+}
+
+// Load and display a photo from whichever cloud it lives on
+async function viewPhotoFromOD(photoId, scope, ctId) {
+  let photo;
+  if (scope === 'job') photo = state.job.photos.find(p => p.id === photoId);
+  else { const ct = state.job.cts.find(c => c.id === ctId); photo = ct?.photos?.find(p => p.id === photoId); }
+  if (!photo) return;
+  const target = photo.gdriveId ? 'Google Drive' : 'OneDrive';
+  const provider = photo.gdriveId ? GD : OD;
+  if (!provider.isSignedIn()) { showToast(`Sign in to ${target} to view this photo`); return; }
+  showToast(`Loading from ${target}…`);
+  try {
+    const objUrl = await Cloud.loadPhoto(photo);
+    if (!objUrl) { showToast('Could not load photo'); return; }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px';
+    overlay.innerHTML = `
+      <img src="${objUrl}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px" />
+      <div style="display:flex;gap:10px">
+        <button onclick="savePhotoToDevice('${objUrl}','${e(photo.name||'photo.jpg')}')" style="background:var(--green);color:#0a0e1a;border:none;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:13px">⬇ Save to Device</button>
+        <button onclick="this.closest('div[style*=fixed]').remove();URL.revokeObjectURL('${objUrl}')" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">Close</button>
+      </div>`;
+    document.body.appendChild(overlay);
+  } catch(err) {
+    showToast('Could not load photo: ' + err.message);
+  }
+}
+
+// ─ Patch saveJob to auto-sync to the job's chosen cloud ─
+const _origSaveJob = saveJob;
+function saveJob() {
+  DB.upsertJob(state.job);
+  const btn = document.getElementById('save-btn');
+  if (btn) { btn.textContent = '✓ Saved'; btn.style.background = 'var(--green)'; setTimeout(()=>{ const b=document.getElementById('save-btn'); if(b){b.textContent='Save';b.style.background='';} },2000); }
+  showToast('Job saved ✓');
+  Cloud.syncJobQuick(state.job); // auto-sync to the chosen cloud target
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════
+OD.init().then(() => render());
+
+// Wait for Google Identity Services to load, then re-render so GD button works
+let _gisCheckCount = 0;
+const _gisCheck = setInterval(() => {
+  if (window.google?.accounts?.oauth2) {
+    clearInterval(_gisCheck);
+    if (GD.isConfigured()) GD.ensureClient();
+    if (state.page === 'list' || state.page === 'settings') render();
+  } else if (++_gisCheckCount > 30) {
+    clearInterval(_gisCheck); // give up after ~6 seconds
+  }
+}, 200);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
