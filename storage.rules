@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Photo bytes. Keep this list identical to firestore.rules.
+// Deploy with:  firebase deploy --only storage
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function allowedEmails() {
+      return [
+        'joshsmounce@gmail.com'
+      ];
+    }
+
+    function isAllowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in allowedEmails();
+    }
+
+    match /photos/{photoId} {
+      allow read, write: if isAllowed();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

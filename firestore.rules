@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Only accounts listed here may read or write job records.
+// To add a colleague: add their Google address to allowedEmails, then
+// deploy with:  firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function allowedEmails() {
+      return [
+        'joshsmounce@gmail.com'
+      ];
+    }
+
+    function isAllowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in allowedEmails();
+    }
+
+    match /jobs/{jobId} {
+      allow read, write: if isAllowed();
+    }
+
+    // Anything not named above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

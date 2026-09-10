@@ -1,6 +1,12 @@
-// CT Manager Service Worker — v1.0
-const CACHE = 'ctm-v1';
-const ASSETS = ['./', './index.html', './manifest.json'];
+// CT Manager Service Worker — v2.0
+const CACHE = 'ctm-v2';
+const ASSETS = [
+  './', './index.html', './manifest.json', './sync.js', './cloud.js',
+  './vendor/firebase-app-compat.js',
+  './vendor/firebase-auth-compat.js',
+  './vendor/firebase-firestore-compat.js',
+  './vendor/firebase-storage-compat.js',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -17,8 +23,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Cache-first for app shell, network-first for everything else
   if (e.request.method !== 'GET') return;
+  // Firebase traffic must never be served from cache, or sync reads go stale
+  const url = new URL(e.request.url);
+  if (url.hostname.endsWith('googleapis.com') || url.hostname.endsWith('firebaseio.com')) return;
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
