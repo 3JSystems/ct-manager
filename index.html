@@ -284,6 +284,11 @@ const Photos = {
     return job ? [...(job.photos || []), ...(job.cts || []).flatMap(ct => ct.photos || [])] : [];
   },
 
+  clearCache() {
+    for (const url of this._urls.values()) URL.revokeObjectURL(url);
+    this._urls.clear();
+  },
+
   // Load a job's blobs into the URL cache so render() can stay synchronous.
   async hydrate(job) {
     await Promise.all(this.allIn(job).map(async p => {
@@ -1108,7 +1113,7 @@ function renderSettings() {
             <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)" />
           </div>
           <div style="margin-top:12px;font-size:12px;color:var(--text3)">
-            Job records and photos are stored on this device only. Photos stay on the device after cloud sync, so they still open offline. Export backs up job records but not photos — set up cloud sync to back those up.
+            Job records and photos are stored on this device only. Export writes one self-contained file including all photos — keep a copy somewhere safe. Import replaces everything currently on this device.
           </div>
         </div>
       </div>
@@ -1138,27 +1143,71 @@ function saveSettings() {
   showToast('Settings saved ✓');
 }
 
-function exportData() {
-  const data = { jobs: DB.getJobs(), settings: DB.getSettings(), exportedAt: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+// Photo bytes are inlined as base64 so a backup is one self-contained file that
+// restores without needing a network or the cloud account it was synced to.
+async function exportData() {
+  showToast('Preparing backup…');
+  const jobs = DB.getJobs();
+  const photos = {};
+  let missing = 0;
+  for (const job of jobs) {
+    for (const p of Photos.allIn(job)) {
+      try {
+        const blob = await Photos.getBlob(p.id);
+        if (blob) photos[p.id] = await blobToDataUrl(blob);
+        else missing++;
+      } catch (err) { console.error(err); missing++; }
+    }
+  }
+  const data = {
+    version: 2,
+    jobs, settings: DB.getSettings(), photos,
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = `ct-manager-backup-${today()}.json`; a.click();
   URL.revokeObjectURL(url);
-  showToast('Data exported ✓');
+  const mb = (blob.size / 1048576).toFixed(1);
+  const photoCount = Object.keys(photos).length;
+  showToast(missing
+    ? `Exported ${jobs.length} jobs, ${photoCount} photos (${missing} missing) — ${mb}MB`
+    : `Exported ${jobs.length} jobs, ${photoCount} photos — ${mb}MB`);
 }
-function importData(event) {
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (data.jobs) DB.saveJobs(data.jobs);
-      if (data.settings) DB.saveSettings(data.settings);
-      showToast(`Imported ${data.jobs?.length||0} jobs ✓`);
-      renderSettings();
-    } catch { showToast('Import failed — invalid file'); }
-  };
-  reader.readAsText(file);
+
+async function importData(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  if (!confirm('Importing replaces all jobs and photos currently on this device. Continue?')) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data.jobs) { showToast('Import failed — no jobs in file'); return; }
+
+    // Restore photo bytes first, so a failure can't leave jobs pointing at nothing
+    let restored = 0;
+    for (const [id, dataUrl] of Object.entries(data.photos || {})) {
+      await Photos.put(id, dataUrlToBlob(dataUrl));
+      restored++;
+    }
+    DB.saveJobs(data.jobs);
+    if (data.settings) DB.saveSettings(data.settings);
+    Photos.clearCache();
+    showToast(`Imported ${data.jobs.length} jobs, ${restored} photos ✓`);
+    renderSettings();
+  } catch (err) {
+    console.error(err);
+    showToast('Import failed — invalid file');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
