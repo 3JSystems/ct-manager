@@ -1129,7 +1129,7 @@ const OD = {
       const clientId = DB.getSettings().msalClientId;
       if (!clientId || clientId === 'YOUR_CLIENT_ID') return null;
       this._msal = new msal.PublicClientApplication({
-        auth: { clientId, authority: this.authority, redirectUri: window.location.origin },
+        auth: { clientId, authority: this.authority, redirectUri: new URL('.', window.location.href).href },
         cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false },
       });
     }

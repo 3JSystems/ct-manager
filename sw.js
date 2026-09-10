@@ -1,6 +1,6 @@
 // CT Manager Service Worker — v1.0
 const CACHE = 'ctm-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
